@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시스템 공사 안내</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a1a;
+            --circuit-color: #ffffff;
+            --text-color: #ffffff;
+            --highlight-color: #ffffff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        .circuit-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .main-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            padding: 20px;
+            flex-direction: column;
+        }
+
+        .container {
+            background: rgba(10, 10, 30, 0.85);
+            border: 1px solid var(--circuit-color);
+            padding: 40px;
+            border-radius: 10px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 30px rgba(0, 234, 255, 0.35);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            color: var(--circuit-color);
+            text-shadow: 0 0 10px var(--circuit-color);
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        .maintenance-time {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px dashed var(--highlight-color);
+            background: rgba(255, 0, 255, 0.1);
+            color: var(--highlight-color);
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: inline-block;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            p {
+                font-size: 1rem;
+            }
+            .maintenance-time {
+                font-size: 1rem;
+                padding: 12px;
+            }
+            .container {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="circuit-bg" id="circuit-canvas"></canvas>
+    <main class="main-content">
+        <div class="container">
+            <h1>시스템 점검중</h1>
+            <p>시스템 성능 개선 및 <br>서비스 안정화를 위한 작업으로 인해<br>현재 페이지에 접속하실 수 없습니다.</p>
+            <div class="maintenance-time">
+                <strong>작업 기간:</strong> 7월 22일 18시 ~ 23일 09시
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('circuit-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const settings = {
+            gridSize: 35,
+            pulseSpeed: 0.001,
+            lineColor: getComputedStyle(document.documentElement).getPropertyValue('--circuit-color').trim(),
+            lineWidth: 1.5
+        };
+
+        let grid = [];
+        let time = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createGrid();
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function createGrid() {
+            grid = [];
+            const cols = Math.ceil(canvas.width / settings.gridSize);
+            const rows = Math.ceil(canvas.height / settings.gridSize);
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    grid.push({
+                        x: x * settings.gridSize,
+                        y: y * settings.gridSize,
+                        // Perlin-like noise for initial state
+                        noise: Math.random() * 1000
+                    });
+                }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = settings.lineColor;
+            ctx.lineWidth = settings.lineWidth;
+            ctx.shadowColor = settings.lineColor;
+            
+            const cols = Math.ceil(canvas.width / settings.gridSize);
+
+            grid.forEach((point, i) => {
+                const pulse = (Math.sin(time + point.noise) + 1) / 2; // 0 to 1
+                ctx.shadowBlur = pulse * 15;
+
+                const rightNeighbor = i + 1;
+                const bottomNeighbor = i + cols;
+
+                // Horizontal connection
+                if ((i % cols) < (cols - 1) && grid[rightNeighbor]) {
+                    if (Math.sin(time + point.noise) > 0.3) {
+                        ctx.beginPath();
+                        ctx.moveTo(point.x, point.y);
+                        ctx.lineTo(grid[rightNeighbor].x, grid[rightNeighbor].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Vertical connection
+                if (grid[bottomNeighbor]) {
+                     if (Math.cos(time + point.noise) > 0.3) {
+                        ctx.beginPath();
+                        ctx.moveTo(point.x, point.y);
+                        ctx.lineTo(grid[bottomNeighbor].x, grid[bottomNeighbor].y);
+                        ctx.stroke();
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            time += settings.pulseSpeed;
+            draw();
+            requestAnimationFrame(animate);
+        }
+
+        resizeCanvas();
+        animate();
+    </script>
+</body>
+</html>
