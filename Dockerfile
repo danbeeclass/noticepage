@@ -12,7 +12,7 @@ COPY nginx.conf /etc/nginx/nginx.conf.template
 RUN cp /usr/share/nginx/html/index.html /usr/share/nginx/html/index.html.bak
 COPY index.html /usr/share/nginx/html
 RUN cp /docker-entrypoint.sh /docker-entrypoint.sh.bak
-COPY docker-entrypoint_dev.sh /docker-entrypoint.sh
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 WORKDIR /usr/share/nginx/html
